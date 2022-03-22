@@ -25,6 +25,7 @@ mod passing {
             .unwrap()
             .replace('\\', "/");
         let out = cmd
+            .args(["-o", "-"])
             .arg("-M")
             .arg(format!(
                 "tests{s}_data_{s}basic{s}local-file.html",
@@ -77,6 +78,7 @@ mod passing {
         let path_html: &Path = Path::new("tests/_data_/basic/local-file.html");
 
         let out = cmd
+            .args(["-o", "-"])
             .arg("-M")
             .arg("-Ijci")
             .arg(path_html.as_os_str())
@@ -127,6 +129,7 @@ mod passing {
             .replace('\\', "/");
         let file_url_protocol: &str = if cfg!(windows) { "file:///" } else { "file://" };
         let out = cmd
+            .args(["-o", "-"])
             .arg("-M")
             .arg("-cji")
             .arg(format!(
@@ -213,6 +216,7 @@ mod passing {
             .replace('\\', "/");
         let file_url_protocol: &str = if cfg!(windows) { "file:///" } else { "file://" };
         let out = cmd
+            .args(["-o", "-"])
             .arg("-M")
             .arg("-i")
             .arg(if cfg!(windows) {

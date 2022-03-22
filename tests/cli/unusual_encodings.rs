@@ -19,6 +19,7 @@ mod passing {
         let cwd_normalized: String = cwd.to_str().unwrap().replace('\\', "/");
         let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
         let out = cmd
+            .args(["-o", "-"])
             .arg("-M")
             .arg(format!(
                 "tests{s}_data_{s}unusual_encodings{s}gb2312.html",
@@ -78,7 +79,7 @@ mod passing {
 
         let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
         cmd.stdin(echo_out);
-        let out = cmd.arg("-M").arg("-").output().unwrap();
+        let out = cmd.args(["-o", "-"]).arg("-M").arg("-").output().unwrap();
 
         // STDERR should be empty
         assert_eq!(String::from_utf8_lossy(&out.stderr), "");
@@ -114,6 +115,7 @@ mod passing {
         let cwd_normalized: String = cwd.to_str().unwrap().replace('\\', "/");
         let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
         let out = cmd
+            .args(["-o", "-"])
             .arg("-M")
             .arg("-C")
             .arg("utf8")
@@ -157,6 +159,7 @@ mod passing {
     fn properly_save_document_with_gb2312_custom_charset_bad() {
         let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
         let out = cmd
+            .args(["-o", "-"])
             .arg("-M")
             .arg("-C")
             .arg("utf0")
@@ -201,6 +204,7 @@ mod failing {
         let cwd_normalized: String = cwd.to_str().unwrap().replace('\\', "/");
         let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
         let out = cmd
+            .args(["-o", "-"])
             .arg("-M")
             .arg(format!(
                 "tests{s}_data_{s}unusual_encodings{s}iso-8859-1.html",

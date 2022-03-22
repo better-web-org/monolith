@@ -26,13 +26,8 @@ mod passing {
         assert_eq!(options.no_metadata, false);
         assert_eq!(options.output, None);
         assert_eq!(options.silent, false);
-        assert_eq!(options.timeout, 120);
-        assert_eq!(
-            options.user_agent,
-            String::from(
-                "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:73.0) Gecko/20100101 Firefox/73.0"
-            )
-        );
+        assert_eq!(options.timeout, 0);
+        assert_eq!(options.user_agent, "".to_string());
         assert_eq!(options.no_video, false);
 
         assert_eq!(options.target, "".to_string());
