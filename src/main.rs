@@ -1,7 +1,7 @@
 use encoding_rs::Encoding;
 use markup5ever_rcdom::RcDom;
 use reqwest::blocking::Client;
-use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
+use reqwest::header::{HeaderValue, USER_AGENT};
 use std::collections::HashMap;
 use std::fs;
 use std::io::{self, prelude::*, Error, Write};
@@ -64,7 +64,7 @@ pub fn read_stdin() -> Vec<u8> {
 }
 
 fn main() {
-    let options = Options::from_args();
+    let mut options = Options::from_args();
     let mut target: String = options.target.clone();
 
     // Check if target was provided
@@ -142,7 +142,7 @@ fn main() {
 
     // Initialize client
     let mut cache = HashMap::new();
-    let mut header_map = HeaderMap::new();
+    let mut header_map = options.headers.take().unwrap_or_default();
 
     header_map.insert(
         USER_AGENT,

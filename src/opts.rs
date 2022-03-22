@@ -1,4 +1,5 @@
 use clap::Parser;
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use std::env;
 #[derive(Parser, Debug, Default)]
 #[clap(name = env!("CARGO_PKG_NAME"))]
@@ -54,6 +55,11 @@ pub struct Options {
     /// 'Sets custom User-Agent string'
     #[clap(long, short = 'u', value_name = "Firefox",default_value_t = DEFAULT_USER_AGENT.into())]
     pub user_agent: String,
+    /// Set the headers, for example:host:example.com
+    ///
+    /// Use `:` to separate name and value, and use spaces to separate each pair of name and value.
+    #[clap(long, short = 'H', value_name = "name:value",parse(from_str=parse_headers_string))]
+    pub headers: Option<HeaderMap>,
     ///'Removes video sources'
     #[clap(long, short = 'v')]
     pub no_video: bool,
@@ -65,7 +71,23 @@ pub struct Options {
     #[clap(long, short = 'n')]
     pub unwrap_noscript: bool,
 }
-
+fn parse_headers_string(input: &str) -> HeaderMap {
+    let mut res = HeaderMap::new();
+    for (k, v) in input.split(' ').filter_map(|kv| kv.split_once(':')) {
+        match HeaderName::from_bytes(k.as_bytes()) {
+            Ok(name) => match HeaderValue::from_bytes(v.as_bytes()) {
+                Ok(val) => {
+                    if let Some(before) = res.insert(&name, val) {
+                        eprintln!("{:?} before value: {:?}", name, before);
+                    };
+                }
+                Err(e) => eprintln!("{:?}", e),
+            },
+            Err(e) => eprintln!("{:?}", e),
+        };
+    }
+    res
+}
 const ASCII: &str = " \
  _____     ______________    __________      ___________________    ___
 |     \\   /              \\  |          |    |                   |  |   |

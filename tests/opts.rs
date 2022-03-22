@@ -29,6 +29,7 @@ mod passing {
         assert_eq!(options.timeout, 0);
         assert_eq!(options.user_agent, "".to_string());
         assert_eq!(options.no_video, false);
+        assert_eq!(options.headers, None);
 
         assert_eq!(options.target, "".to_string());
     }
