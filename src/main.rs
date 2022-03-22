@@ -1,5 +1,5 @@
 use encoding_rs::Encoding;
-use html5ever::rcdom::RcDom;
+use markup5ever_rcdom::RcDom;
 use reqwest::blocking::Client;
 use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
 use std::collections::HashMap;
@@ -32,13 +32,13 @@ impl Output {
         }
     }
 
-    fn write(&mut self, bytes: &Vec<u8>) -> Result<(), Error> {
+    fn write(&mut self, bytes: &[u8]) -> Result<(), Error> {
         match self {
             Output::Stdout(stdout) => {
                 stdout.write_all(bytes)?;
                 // Ensure newline at end of output
                 if bytes.last() != Some(&b"\n"[0]) {
-                    stdout.write(b"\n")?;
+                    stdout.write_all(b"\n")?;
                 }
                 stdout.flush()
             }
@@ -46,7 +46,7 @@ impl Output {
                 file.write_all(bytes)?;
                 // Ensure newline at end of output
                 if bytes.last() != Some(&b"\n"[0]) {
-                    file.write(b"\n")?;
+                    file.write_all(b"\n")?;
                 }
                 file.flush()
             }
@@ -68,7 +68,7 @@ fn main() {
     let mut target: String = options.target.clone();
 
     // Check if target was provided
-    if target.len() == 0 {
+    if target.is_empty() {
         if !options.silent {
             eprintln!("No target specified");
         }
@@ -77,7 +77,7 @@ fn main() {
 
     // Check if custom charset is valid
     if let Some(custom_charset) = options.charset.clone() {
-        if !Encoding::for_label_no_replacement(custom_charset.as_bytes()).is_some() {
+        if Encoding::for_label_no_replacement(custom_charset.as_bytes()).is_none() {
             eprintln!("Unknown encoding: {}", &custom_charset);
             process::exit(1);
         }
@@ -119,10 +119,7 @@ fn main() {
                             }
                             Err(_err) => {
                                 if !options.silent {
-                                    eprintln!(
-                                        "Could not generate file URL out of given path: {}",
-                                        "err"
-                                    );
+                                    eprintln!("Could not generate file URL out of given path: err");
                                 }
                                 process::exit(1);
                             }
@@ -146,12 +143,12 @@ fn main() {
     // Initialize client
     let mut cache = HashMap::new();
     let mut header_map = HeaderMap::new();
-    if let Some(user_agent) = &options.user_agent {
-        header_map.insert(
-            USER_AGENT,
-            HeaderValue::from_str(&user_agent).expect("Invalid User-Agent header specified"),
-        );
-    }
+
+    header_map.insert(
+        USER_AGENT,
+        HeaderValue::from_str(&options.user_agent).expect("Invalid User-Agent header specified"),
+    );
+
     let client = if options.timeout > 0 {
         Client::builder().timeout(Duration::from_secs(options.timeout))
     } else {
@@ -168,7 +165,6 @@ fn main() {
 
     let data: Vec<u8>;
     let mut document_encoding: String = "".to_string();
-    let mut dom: RcDom;
 
     // Retrieve target document
     if use_stdin {
@@ -187,12 +183,7 @@ fn main() {
                     process::exit(1);
                 }
 
-                if options
-                    .base_url
-                    .clone()
-                    .unwrap_or("".to_string())
-                    .is_empty()
-                {
+                if options.base_url.clone().unwrap_or_default().is_empty() {
                     base_url = final_url;
                 }
 
@@ -211,7 +202,7 @@ fn main() {
     }
 
     // Initial parse
-    dom = html_to_dom(&data, document_encoding.clone());
+    let mut dom: RcDom = html_to_dom(&data, document_encoding.clone());
 
     // TODO: investigate if charset from filesystem/data URL/HTTP headers
     //       has say over what's specified in HTML
@@ -228,7 +219,7 @@ fn main() {
     }
 
     // Use custom base URL if specified, read and use what's in the DOM otherwise
-    let custom_base_url: String = options.base_url.clone().unwrap_or("".to_string());
+    let custom_base_url: String = options.base_url.clone().unwrap_or_default();
     if custom_base_url.is_empty() {
         // No custom base URL is specified
         // Try to see if document has BASE element
@@ -290,7 +281,7 @@ fn main() {
     {
         let favicon_ico_url: Url = resolve_url(&base_url, "/favicon.ico");
 
-        match retrieve_asset(
+        if let Ok((data, final_url, media_type, charset)) = retrieve_asset(
             &mut cache,
             &client,
             &target_url,
@@ -298,14 +289,8 @@ fn main() {
             &options,
             0,
         ) {
-            Ok((data, final_url, media_type, charset)) => {
-                let favicon_data_url: Url =
-                    create_data_url(&media_type, &charset, &data, &final_url);
-                dom = add_favicon(&dom.document, favicon_data_url.to_string());
-            }
-            Err(_) => {
-                // Failed to retrieve /favicon.ico
-            }
+            let favicon_data_url: Url = create_data_url(&media_type, &charset, &data, &final_url);
+            dom = add_favicon(&dom.document, favicon_data_url.to_string());
         }
     }
 

@@ -2,14 +2,13 @@ use reqwest::blocking::Client;
 use reqwest::header::CONTENT_TYPE;
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
 use url::Url;
 
 use crate::opts::Options;
 use crate::url::{clean_url, parse_data_url};
 
-const ANSI_COLOR_RED: &'static str = "\x1b[31m";
-const ANSI_COLOR_RESET: &'static str = "\x1b[0m";
+const ANSI_COLOR_RED: &str = "\x1b[31m";
+const ANSI_COLOR_RESET: &str = "\x1b[0m";
 const MAGIC: [[&[u8]; 2]; 18] = [
     // Image
     [b"GIF87a", b"image/gif"],
@@ -116,21 +115,16 @@ pub fn parse_content_type(content_type: &str) -> (String, String, bool) {
 
     // Parse meta data
     let content_type_items: Vec<&str> = content_type.split(';').collect();
-    let mut i: i8 = 0;
-    for item in &content_type_items {
+    for (i, item) in content_type_items.iter().enumerate() {
         if i == 0 {
-            if item.trim().len() > 0 {
+            if !item.trim().is_empty() {
                 media_type = item.trim().to_string();
             }
-        } else {
-            if item.trim().eq_ignore_ascii_case("base64") {
-                is_base64 = true;
-            } else if item.trim().starts_with("charset=") {
-                charset = item.trim().chars().skip(8).collect();
-            }
+        } else if item.trim().eq_ignore_ascii_case("base64") {
+            is_base64 = true;
+        } else if item.trim().starts_with("charset=") {
+            charset = item.trim().chars().skip(8).collect();
         }
-
-        i += 1;
     }
 
     (media_type, charset, is_base64)
@@ -144,166 +138,165 @@ pub fn retrieve_asset(
     options: &Options,
     depth: u32,
 ) -> Result<(Vec<u8>, Url, String, String), reqwest::Error> {
-    if url.scheme() == "data" {
-        let (media_type, charset, data) = parse_data_url(url);
-        Ok((data, url.clone(), media_type, charset))
-    } else if url.scheme() == "file" {
-        // Check if parent_url is also file:/// (if not, then we don't embed the asset)
-        if parent_url.scheme() != "file" {
-            if !options.silent {
-                eprintln!(
-                    "{}{}{} ({}){}",
-                    indent(depth).as_str(),
-                    if options.no_color { "" } else { ANSI_COLOR_RED },
-                    &url,
-                    "Security Error",
-                    if options.no_color {
-                        ""
-                    } else {
-                        ANSI_COLOR_RESET
-                    },
-                );
-            }
-            // Provoke error
-            client.get("").send()?;
+    let get_color = || {
+        if options.no_color {
+            ("", "")
+        } else {
+            (ANSI_COLOR_RED, ANSI_COLOR_RESET)
         }
-
-        let path_buf: PathBuf = url.to_file_path().unwrap().clone();
-        let path: &Path = path_buf.as_path();
-        if path.exists() {
-            if path.is_dir() {
+    };
+    match url.scheme() {
+        "data" => {
+            let (media_type, charset, data) = parse_data_url(url);
+            Ok((data, url.clone(), media_type, charset))
+        }
+        "file" => {
+            // Check if parent_url is also file:/// (if not, then we don't embed the asset)
+            if parent_url.scheme() != "file" {
                 if !options.silent {
+                    let (color_red, color_reset) = get_color();
                     eprintln!(
-                        "{}{}{} (is a directory){}",
+                        "{}{}{} (Security Error){}",
                         indent(depth).as_str(),
-                        if options.no_color { "" } else { ANSI_COLOR_RED },
+                        color_red,
                         &url,
-                        if options.no_color {
-                            ""
-                        } else {
-                            ANSI_COLOR_RESET
-                        },
+                        color_reset,
+                    );
+                }
+                // Provoke error
+                client.get("").send()?;
+            }
+
+            let path = url.to_file_path().expect("Url to file path field.");
+            if path.exists() {
+                if path.is_dir() {
+                    if !options.silent {
+                        let (color_red, color_reset) = get_color();
+                        eprintln!(
+                            "{}{}{} (is a directory){}",
+                            indent(depth).as_str(),
+                            color_red,
+                            &url,
+                            color_reset,
+                        );
+                    }
+
+                    // Provoke error
+                    Err(client.get("").send().unwrap_err())
+                } else {
+                    if !options.silent {
+                        eprintln!("{}{}", indent(depth).as_str(), &url);
+                    }
+
+                    let file_blob: Vec<u8> = fs::read(&path).expect("Unable to read file");
+
+                    Ok((
+                        file_blob.clone(),
+                        url.clone(),
+                        detect_media_type(&file_blob, url),
+                        "".to_string(),
+                    ))
+                }
+            } else {
+                if !options.silent {
+                    let (color_red, color_reset) = get_color();
+                    eprintln!(
+                        "{}{}{} (not found){}",
+                        indent(depth).as_str(),
+                        color_red,
+                        &url,
+                        color_reset,
                     );
                 }
 
                 // Provoke error
                 Err(client.get("").send().unwrap_err())
-            } else {
+            }
+        }
+        _ => {
+            let cache_key: String = clean_url(url.clone()).as_str().to_string();
+
+            if cache.contains_key(&cache_key) {
+                // URL is in cache, we get and return it
                 if !options.silent {
-                    eprintln!("{}{}", indent(depth).as_str(), &url);
+                    eprintln!("{}{} (from cache)", indent(depth).as_str(), &url);
                 }
 
-                let file_blob: Vec<u8> = fs::read(&path).expect("Unable to read file");
-
                 Ok((
-                    file_blob.clone(),
+                    cache.get(&cache_key).unwrap().to_vec(),
                     url.clone(),
-                    detect_media_type(&file_blob, url),
+                    "".to_string(),
                     "".to_string(),
                 ))
-            }
-        } else {
-            if !options.silent {
-                eprintln!(
-                    "{}{}{} (not found){}",
-                    indent(depth).as_str(),
-                    if options.no_color { "" } else { ANSI_COLOR_RED },
-                    &url,
-                    if options.no_color {
-                        ""
-                    } else {
-                        ANSI_COLOR_RESET
-                    },
-                );
-            }
+            } else {
+                // URL not in cache, we retrieve the file
+                match client.get(url.as_str()).send() {
+                    Ok(mut response) => {
+                        if !options.ignore_errors && response.status() != 200 {
+                            if !options.silent {
+                                let (color_red, color_reset) = get_color();
+                                eprintln!(
+                                    "{}{}{} ({}){}",
+                                    indent(depth).as_str(),
+                                    color_red,
+                                    &url,
+                                    response.status(),
+                                    color_reset,
+                                );
+                            }
+                            // Provoke error
+                            return Err(client.get("").send().unwrap_err());
+                        }
 
-            // Provoke error
-            Err(client.get("").send().unwrap_err())
-        }
-    } else {
-        let cache_key: String = clean_url(url.clone()).as_str().to_string();
-
-        if cache.contains_key(&cache_key) {
-            // URL is in cache, we get and return it
-            if !options.silent {
-                eprintln!("{}{} (from cache)", indent(depth).as_str(), &url);
-            }
-
-            Ok((
-                cache.get(&cache_key).unwrap().to_vec(),
-                url.clone(),
-                "".to_string(),
-                "".to_string(),
-            ))
-        } else {
-            // URL not in cache, we retrieve the file
-            match client.get(url.as_str()).send() {
-                Ok(mut response) => {
-                    if !options.ignore_errors && response.status() != 200 {
                         if !options.silent {
+                            if url.as_str() == response.url().as_str() {
+                                eprintln!("{}{}", indent(depth).as_str(), &url);
+                            } else {
+                                eprintln!(
+                                    "{}{} -> {}",
+                                    indent(depth).as_str(),
+                                    &url,
+                                    &response.url()
+                                );
+                            }
+                        }
+
+                        let new_cache_key: String = clean_url(response.url().clone()).to_string();
+
+                        // Convert response into a byte array
+                        let mut data: Vec<u8> = vec![];
+                        response.copy_to(&mut data).unwrap();
+
+                        // Attempt to obtain media type and charset by reading Content-Type header
+                        let content_type: &str = response
+                            .headers()
+                            .get(CONTENT_TYPE)
+                            .and_then(|header| header.to_str().ok())
+                            .unwrap_or("");
+
+                        let (media_type, charset, _is_base64) = parse_content_type(content_type);
+
+                        // Add retrieved resource to cache
+                        cache.insert(new_cache_key, data.clone());
+
+                        // Return
+                        Ok((data, response.url().clone(), media_type, charset))
+                    }
+                    Err(error) => {
+                        if !options.silent {
+                            let (color_red, color_reset) = get_color();
                             eprintln!(
                                 "{}{}{} ({}){}",
                                 indent(depth).as_str(),
-                                if options.no_color { "" } else { ANSI_COLOR_RED },
+                                color_red,
                                 &url,
-                                response.status(),
-                                if options.no_color {
-                                    ""
-                                } else {
-                                    ANSI_COLOR_RESET
-                                },
+                                error,
+                                color_reset,
                             );
                         }
-                        // Provoke error
-                        return Err(client.get("").send().unwrap_err());
+
+                        Err(client.get("").send().unwrap_err())
                     }
-
-                    if !options.silent {
-                        if url.as_str() == response.url().as_str() {
-                            eprintln!("{}{}", indent(depth).as_str(), &url);
-                        } else {
-                            eprintln!("{}{} -> {}", indent(depth).as_str(), &url, &response.url());
-                        }
-                    }
-
-                    let new_cache_key: String = clean_url(response.url().clone()).to_string();
-
-                    // Convert response into a byte array
-                    let mut data: Vec<u8> = vec![];
-                    response.copy_to(&mut data).unwrap();
-
-                    // Attempt to obtain media type and charset by reading Content-Type header
-                    let content_type: &str = response
-                        .headers()
-                        .get(CONTENT_TYPE)
-                        .and_then(|header| header.to_str().ok())
-                        .unwrap_or("");
-
-                    let (media_type, charset, _is_base64) = parse_content_type(&content_type);
-
-                    // Add retrieved resource to cache
-                    cache.insert(new_cache_key, data.clone());
-
-                    // Return
-                    Ok((data, response.url().clone(), media_type, charset))
-                }
-                Err(error) => {
-                    if !options.silent {
-                        eprintln!(
-                            "{}{}{} ({}){}",
-                            indent(depth).as_str(),
-                            if options.no_color { "" } else { ANSI_COLOR_RED },
-                            &url,
-                            error,
-                            if options.no_color {
-                                ""
-                            } else {
-                                ANSI_COLOR_RESET
-                            },
-                        );
-                    }
-
-                    Err(client.get("").send().unwrap_err())
                 }
             }
         }

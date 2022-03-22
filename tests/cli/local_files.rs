@@ -23,7 +23,7 @@ mod passing {
             .unwrap()
             .to_str()
             .unwrap()
-            .replace("\\", "/");
+            .replace('\\', "/");
         let out = cmd
             .arg("-M")
             .arg(format!(
@@ -124,7 +124,7 @@ mod passing {
             .unwrap()
             .to_str()
             .unwrap()
-            .replace("\\", "/");
+            .replace('\\', "/");
         let file_url_protocol: &str = if cfg!(windows) { "file:///" } else { "file://" };
         let out = cmd
             .arg("-M")
@@ -210,7 +210,7 @@ mod passing {
             .unwrap()
             .to_str()
             .unwrap()
-            .replace("\\", "/");
+            .replace('\\', "/");
         let file_url_protocol: &str = if cfg!(windows) { "file:///" } else { "file://" };
         let out = cmd
             .arg("-M")

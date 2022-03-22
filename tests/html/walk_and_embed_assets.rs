@@ -8,6 +8,7 @@
 #[cfg(test)]
 mod passing {
     use html5ever::serialize::{serialize, SerializeOpts};
+    use markup5ever_rcdom::SerializableHandle;
     use reqwest::blocking::Client;
     use std::collections::HashMap;
     use url::Url;
@@ -32,7 +33,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -55,7 +57,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -78,7 +81,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -107,7 +111,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -143,7 +148,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -180,7 +186,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -204,7 +211,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -236,7 +244,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -272,7 +281,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -306,7 +316,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -343,7 +354,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -381,7 +393,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -427,7 +440,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -466,7 +480,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
@@ -501,7 +516,8 @@ mod passing {
         html::walk_and_embed_assets(cache, &client, &url, &dom.document, &options, 0);
 
         let mut buf: Vec<u8> = Vec::new();
-        serialize(&mut buf, &dom.document, SerializeOpts::default()).unwrap();
+        let serializable_document = SerializableHandle::from(dom.document);
+        serialize(&mut buf, &serializable_document, SerializeOpts::default()).unwrap();
 
         assert_eq!(
             buf.iter().map(|&c| c as char).collect::<String>(),
