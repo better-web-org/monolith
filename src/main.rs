@@ -11,8 +11,8 @@ use std::time::Duration;
 use url::Url;
 
 use monolith::html::{
-    add_favicon, create_metadata_tag, get_base_url, get_charset, has_favicon, html_to_dom,
-    serialize_document, set_base_url, set_charset, walk_and_embed_assets,
+    add_favicon, create_metadata_tag, get_base_url, get_charset, get_title, has_favicon,
+    html_to_dom, serialize_document, set_base_url, set_charset, walk_and_embed_assets,
 };
 use monolith::opts::Options;
 use monolith::url::{create_data_url, resolve_url};
@@ -76,7 +76,7 @@ fn main() {
     }
 
     // Check if custom charset is valid
-    if let Some(custom_charset) = options.charset.clone() {
+    if let Some(ref custom_charset) = options.charset {
         if Encoding::for_label_no_replacement(custom_charset.as_bytes()).is_none() {
             eprintln!("Unknown encoding: {}", &custom_charset);
             process::exit(1);
@@ -204,6 +204,7 @@ fn main() {
     // Initial parse
     let mut dom: RcDom = html_to_dom(&data, document_encoding.clone());
 
+    let title = get_title(&dom.document);
     // TODO: investigate if charset from filesystem/data URL/HTTP headers
     //       has say over what's specified in HTML
 
@@ -293,10 +294,9 @@ fn main() {
             dom = add_favicon(&dom.document, favicon_data_url.to_string());
         }
     }
-
     // Save using specified charset, if given
-    if let Some(custom_charset) = options.charset.clone() {
-        document_encoding = custom_charset;
+    if let Some(ref custom_charset) = options.charset {
+        document_encoding = custom_charset.clone();
         dom = set_charset(dom, document_encoding.clone());
     }
 
@@ -311,7 +311,15 @@ fn main() {
     }
 
     // Define output
-    let mut output = Output::new(&options.output).expect("Could not prepare output");
+    let mut output = if let Some(ref output) = options.output {
+        Output::new(output)
+    } else if let Some(ref title) = title {
+        let path = format!("{}.html", title.replace(' ', "_"));
+        Output::new(&path)
+    } else {
+        Output::new("")
+    }
+    .expect("Could not prepare output");
 
     // Write result into stdout or file
     output.write(&result).expect("Could not write HTML output");

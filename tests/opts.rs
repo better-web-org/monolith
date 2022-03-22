@@ -24,7 +24,7 @@ mod passing {
         assert_eq!(options.no_js, false);
         assert_eq!(options.insecure, false);
         assert_eq!(options.no_metadata, false);
-        assert_eq!(options.output, "".to_string());
+        assert_eq!(options.output, None);
         assert_eq!(options.silent, false);
         assert_eq!(options.timeout, 120);
         assert_eq!(

@@ -1,6 +1,6 @@
 use clap::Parser;
 use std::env;
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Default)]
 #[clap(name = env!("CARGO_PKG_NAME"))]
 #[clap(author = author())]
 #[clap(version)]
@@ -10,13 +10,13 @@ pub struct Options {
     #[clap(long, short = 'a')]
     pub no_audio: bool,
     /// 'Sets custom base URL'
-    #[clap(long, short = 'b', requires = "[http://localhost/]")]
+    #[clap(long, short = 'b', value_name = "http://localhost/")]
     pub base_url: Option<String>,
     /// 'Removes CSS'
     #[clap(long, short = 'c')]
     pub no_css: bool,
     /// 'Enforces custom encoding'
-    #[clap(long, short = 'c', requires = "[UTF-8]")]
+    #[clap(long, short = 'C', value_name = "UTF-8")]
     pub charset: Option<String>,
     /// 'Ignore network errors'
     #[clap(long, short = 'e')]
@@ -43,16 +43,16 @@ pub struct Options {
     #[clap(long, short = 'M')]
     pub no_metadata: bool,
     /// 'Writes output to <file>, use - for STDOUT'
-    #[clap(long, short = 'o', requires = "[document.html]")]
-    pub output: String,
+    #[clap(long, short = 'o', value_name = "document.html")]
+    pub output: Option<String>,
     /// 'Suppresses verbosity'
     #[clap(long, short = 's')]
     pub silent: bool,
     /// 'Adjusts network request timeout'
-    #[clap(long, short = 't', requires = "[60]",default_value_t = DEFAULT_NETWORK_TIMEOUT)]
+    #[clap(long, short = 't', value_name = "60",default_value_t = DEFAULT_NETWORK_TIMEOUT)]
     pub timeout: u64,
     /// 'Sets custom User-Agent string'
-    #[clap(long, short = 'u', requires = "[Firefox]", default_value_t = DEFAULT_USER_AGENT.into())]
+    #[clap(long, short = 'u', value_name = "Firefox",default_value_t = DEFAULT_USER_AGENT.into())]
     pub user_agent: String,
     ///'Removes video sources'
     #[clap(long, short = 'v')]
@@ -64,33 +64,6 @@ pub struct Options {
     /// 'Replaces NOSCRIPT elements with their contents'
     #[clap(long, short = 'n')]
     pub unwrap_noscript: bool,
-}
-
-impl Default for Options {
-    fn default() -> Self {
-        Self {
-            no_audio: Default::default(),
-            base_url: Default::default(),
-            no_css: Default::default(),
-            charset: Default::default(),
-            ignore_errors: Default::default(),
-            no_frames: Default::default(),
-            no_fonts: Default::default(),
-            no_images: Default::default(),
-            isolate: Default::default(),
-            no_js: Default::default(),
-            insecure: Default::default(),
-            no_metadata: Default::default(),
-            output: Default::default(),
-            silent: Default::default(),
-            timeout: DEFAULT_NETWORK_TIMEOUT,
-            user_agent: DEFAULT_USER_AGENT.into(),
-            no_video: Default::default(),
-            target: Default::default(),
-            no_color: Default::default(),
-            unwrap_noscript: Default::default(),
-        }
-    }
 }
 
 const ASCII: &str = " \

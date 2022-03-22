@@ -30,6 +30,23 @@ struct SrcSetItem<'a> {
 
 const ICON_VALUES: &[&str] = &["icon", "shortcut icon"];
 
+pub fn get_title(document: &Handle) -> Option<String> {
+    if let Some(ref html) = get_child_node_by_name(document, "html") {
+        if let Some(ref head) = get_child_node_by_name(html, "head") {
+            if let Some(ref title) = get_child_node_by_name(head, "title") {
+                for element in title.children.borrow().iter() {
+                    match element.data {
+                        NodeData::Text { ref contents } => {
+                            return Some(contents.borrow().to_owned().to_string())
+                        }
+                        _ => continue,
+                    }
+                }
+            }
+        }
+    }
+    None
+}
 pub fn add_favicon(document: &Handle, favicon_data_url: String) -> RcDom {
     let mut buf: Vec<u8> = Vec::new();
     let serializeable_document = SerializableHandle::from(document.clone());
